@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Archwright — Design toy bridges with card crossings</title>
+<meta name="description" content="Archwright is a workshop-bench puzzle game. Swap adjacent cards to line up same-element neighbors and watch a stable arch lock into place across each row." />
+<meta name="theme-color" content="#0B1214" />
+<style>
+  :root {
+    --bg: #0B1214;
+    --surface: #131C20;
+    --surface-2: #18232A;
+    --stroke: #1F2E36;
+    --text: #E9F2EE;
+    --text-dim: #9DB1B7;
+    --muted: #6F8489;
+    --mint: #4FE3B8;
+    --teal: #2BB8C7;
+    --sky: #6FC3FF;
+    --amber: #F2B65A;
+    --coral: #F26F6F;
+    --radius-lg: 22px;
+    --radius-md: 16px;
+    --radius-sm: 12px;
+    --shadow: 0 18px 40px rgba(0,0,0,.45);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Helvetica Neue", Arial, sans-serif;
+    background: radial-gradient(1200px 600px at 20% -10%, rgba(79,227,184,.10), transparent 60%),
+                radial-gradient(900px 500px at 90% 10%, rgba(111,195,255,.08), transparent 60%),
+                var(--bg);
+    color: var(--text);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--mint); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 56px 22px 96px; }
+
+  /* Top nav */
+  header.nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 56px; }
+  .brand { display: flex; align-items: center; gap: 12px; font-weight: 700; letter-spacing: 3px; }
+  .brand .logo {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: linear-gradient(135deg, var(--mint), var(--teal));
+    display: grid; place-items: center; color: #08241B; font-weight: 900;
+  }
+  .brand .name { letter-spacing: 4px; }
+  nav.links { display: flex; gap: 22px; font-size: 14px; color: var(--text-dim); }
+  nav.links a { color: var(--text-dim); }
+
+  /* Hero */
+  .hero {
+    background: linear-gradient(160deg, rgba(79,227,184,.10), rgba(43,184,199,.06));
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius-lg);
+    padding: 44px 36px;
+    box-shadow: var(--shadow);
+    display: grid; grid-template-columns: 1.2fr 1fr; gap: 28px;
+    align-items: center;
+  }
+  .eyebrow {
+    display: inline-block; font-size: 12px; letter-spacing: 3px;
+    color: var(--mint); background: rgba(79,227,184,.10);
+    padding: 6px 12px; border-radius: 999px;
+  }
+  .hero h1 {
+    font-size: clamp(34px, 5vw, 52px);
+    line-height: 1.05; margin: 18px 0 14px;
+    letter-spacing: -.5px;
+  }
+  .hero h1 .grad {
+    background: linear-gradient(90deg, var(--mint), var(--sky));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p.lede { color: var(--text-dim); font-size: 17px; margin: 0 0 24px; max-width: 540px; }
+  .cta { display: inline-flex; align-items: center; gap: 10px; padding: 14px 22px; border-radius: 14px;
+    background: linear-gradient(135deg, var(--mint), var(--teal)); color: #08241B; font-weight: 700;
+    box-shadow: 0 12px 30px rgba(79,227,184,.25);
+  }
+  .cta.secondary { background: var(--surface-2); color: var(--text); border: 1px solid var(--stroke); box-shadow: none; margin-left: 10px; }
+  .cta:hover { text-decoration: none; transform: translateY(-1px); }
+  .arch-art {
+    aspect-ratio: 5 / 4;
+    border-radius: var(--radius-lg);
+    background: radial-gradient(closest-side, rgba(79,227,184,.18), transparent 70%) center/100% 100% no-repeat,
+                linear-gradient(160deg, var(--surface), var(--surface-2));
+    border: 1px solid var(--stroke);
+    position: relative; overflow: hidden;
+  }
+  .arch-art svg { width: 80%; position: absolute; left: 10%; top: 12%; }
+
+  /* Sections */
+  section { margin-top: 64px; }
+  section h2 { font-size: 28px; margin: 0 0 6px; letter-spacing: -.2px; }
+  section p.section-sub { color: var(--text-dim); margin: 0 0 24px; }
+
+  .grid { display: grid; gap: 16px; grid-template-columns: repeat(3, 1fr); }
+  @media (max-width: 820px) {
+    .hero { grid-template-columns: 1fr; padding: 32px 22px; }
+    .grid { grid-template-columns: 1fr; }
+    nav.links { display: none; }
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius-md);
+    padding: 20px;
+    transition: transform .2s ease, border-color .2s ease;
+  }
+  .card:hover { transform: translateY(-2px); border-color: rgba(79,227,184,.4); }
+  .card .icon {
+    width: 40px; height: 40px; border-radius: 999px;
+    display: grid; place-items: center; margin-bottom: 12px;
+    background: rgba(79,227,184,.12); color: var(--mint);
+    font-size: 18px;
+  }
+  .card h3 { margin: 0 0 6px; font-size: 16px; }
+  .card p { margin: 0; color: var(--text-dim); font-size: 14px; }
+
+  .biomes {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;
+  }
+  @media (max-width: 820px) { .biomes { grid-template-columns: repeat(2, 1fr); } }
+  .biome {
+    border-radius: var(--radius-md);
+    padding: 18px 14px; text-align: center;
+    background: var(--surface); border: 1px solid var(--stroke);
+  }
+  .biome .dot { width: 14px; height: 14px; border-radius: 999px; display: inline-block; margin-bottom: 8px; }
+  .biome b { display: block; font-size: 14px; margin-bottom: 2px; }
+  .biome span { font-size: 12px; color: var(--muted); letter-spacing: 1px; }
+
+  .faq { display: grid; gap: 12px; }
+  .faq details {
+    background: var(--surface); border: 1px solid var(--stroke);
+    border-radius: var(--radius-md); padding: 14px 18px;
+  }
+  .faq summary { cursor: pointer; font-weight: 600; }
+  .faq details p { color: var(--text-dim); margin: 10px 0 0; font-size: 14px; }
+
+  footer {
+    margin-top: 80px; padding-top: 28px; border-top: 1px solid var(--stroke);
+    display: flex; flex-wrap: wrap; gap: 16px; justify-content: space-between;
+    color: var(--muted); font-size: 13px;
+  }
+  footer .links a { color: var(--text-dim); margin-right: 14px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="nav">
+    <div class="brand">
+      <div class="logo">A</div>
+      <div class="name">ARCHWRIGHT</div>
+    </div>
+    <nav class="links">
+      <a href="#features">Features</a>
+      <a href="#biomes">Biomes</a>
+      <a href="#faq">FAQ</a>
+      <a href="mailto:dhfu94086@gmail.com">Support</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div>
+      <span class="eyebrow">CARD-CROSSING WORKSHOP</span>
+      <h1>Design toy bridges with <span class="grad">card crossings.</span></h1>
+      <p class="lede">Archwright is a workshop-bench puzzle game. Every crossing begins with a shuffled deck. Tap two adjacent cards to swap them, line up same-color neighbors, and watch a stable arch lock into place across each row.</p>
+      <div>
+        <a class="cta" href="https://apps.apple.com/">Download on the App Store</a>
+        <a class="cta secondary" href="mailto:dhfu94086@gmail.com">Contact Support</a>
+      </div>
+    </div>
+    <div class="arch-art" aria-hidden="true">
+      <svg viewBox="0 0 200 130" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="g1" x1="0" x2="1" y1="0" y2="1">
+            <stop offset="0" stop-color="#4FE3B8"/>
+            <stop offset="1" stop-color="#2BB8C7"/>
+          </linearGradient>
+        </defs>
+        <path d="M 15 115 L 15 60 Q 100 -20 185 60 L 185 115 Z" fill="url(#g1)" opacity=".9"/>
+        <path d="M 15 115 L 185 115" stroke="#4FE3B8" stroke-width="3" opacity=".6"/>
+        <circle cx="40" cy="80" r="5" fill="#0B1214"/>
+        <circle cx="100" cy="50" r="5" fill="#0B1214"/>
+        <circle cx="160" cy="80" r="5" fill="#0B1214"/>
+      </svg>
+    </div>
+  </section>
+
+  <section id="features">
+    <h2>Highlights</h2>
+    <p class="section-sub">A focused, offline-first workshop. Five biomes, a snappy swap core, and a private gallery logbook.</p>
+    <div class="grid">
+      <div class="card">
+        <div class="icon">⎌</div>
+        <h3>Card Swap Engine</h3>
+        <p>Tap one card, tap an adjacent card, and the engine analyzes the new board instantly. Every stable arch lights up.</p>
+      </div>
+      <div class="card">
+        <div class="icon">⎙</div>
+        <h3>Five Workshop Biomes</h3>
+        <p>From a friendly two-row beginner bench to a four-row neon skyway with tight move limits.</p>
+      </div>
+      <div class="card">
+        <div class="icon">◉</div>
+        <h3>Gallery Logbook</h3>
+        <p>Snap a photo of your workshop model or attach one from your library. Generate a clean blueprint render.</p>
+      </div>
+      <div class="card">
+        <div class="icon">★</div>
+        <h3>Stats &amp; Badges</h3>
+        <p>Track wins, win rate, best scores, biome tour progress, and eight unlockable workshop titles.</p>
+      </div>
+      <div class="card">
+        <div class="icon">◐</div>
+        <h3>Two-Player Workshop</h3>
+        <p>Pass the device on a single bench and compare each architect's arches side by side.</p>
+      </div>
+      <div class="card">
+        <div class="icon">⌬</div>
+        <h3>Privacy-Respecting</h3>
+        <p>No login, no network, no analytics. All bridges, photos, and stats stay on your device.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="biomes">
+    <h2>Five biomes, one workshop</h2>
+    <p class="section-sub">Each biome asks for a different number of stable rows and a minimum arch length.</p>
+    <div class="biomes">
+      <div class="biome"><span class="dot" style="background:#4FE3B8"></span><b>Skyline Workshop</b><span>2 ROWS</span></div>
+      <div class="biome"><span class="dot" style="background:#6FC3FF"></span><b>Riverside Camp</b><span>2 ROWS</span></div>
+      <div class="biome"><span class="dot" style="background:#F2B65A"></span><b>Mountain Pass</b><span>3 ROWS</span></div>
+      <div class="biome"><span class="dot" style="background:#F26F6F"></span><b>Sunset Bay</b><span>3 ROWS</span></div>
+      <div class="biome"><span class="dot" style="background:#B27BFF"></span><b>Neon Skyway</b><span>4 ROWS</span></div>
+    </div>
+  </section>
+
+  <section id="faq">
+    <h2>FAQ</h2>
+    <p class="section-sub">A few quick answers. For anything else, write to <a href="mailto:dhfu94086@gmail.com">dhfu94086@gmail.com</a>.</p>
+    <div class="faq">
+      <details>
+        <summary>Does Archwright require an account or internet connection?</summary>
+        <p>No. Archwright has no login flow and never makes a network call. Everything lives on your device.</p>
+      </details>
+      <details>
+        <summary>Which permissions does the app request?</summary>
+        <p>Only Camera and Photo Library, and only when you choose to attach a photo to a saved bridge. You can deny either and the rest of the app still works.</p>
+      </details>
+      <details>
+        <summary>How do I erase my data?</summary>
+        <p>Open Workshop Settings and tap <em>Erase All Workshop Data</em>. The action is irreversible.</p>
+      </details>
+      <details>
+        <summary>Where can I get help?</summary>
+        <p>Email <a href="mailto:dhfu94086@gmail.com">dhfu94086@gmail.com</a>. We usually respond within two business days.</p>
+      </details>
+    </div>
+  </section>
+
+  <footer>
+    <div>© 2026 Archwright. Built in the workshop.</div>
+    <div class="links">
+      <a href="index.html">Home</a>
+      <a href="privacy.html">Privacy</a>
+      <a href="terms.html">Terms of Use</a>
+      <a href="mailto:dhfu94086@gmail.com">dhfu94086@gmail.com</a>
+    </div>
+  </footer>
+</div>
+</body>
+</html>
